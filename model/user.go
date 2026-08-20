@@ -161,6 +161,24 @@ func generateDefaultSidebarConfigForRole(userRole int) string {
 	return string(configBytes)
 }
 
+var userBindColumns = map[string]bool{
+	"github_id": true, "discord_id": true, "oidc_id": true,
+	"linux_do_id": true, "wechat_id": true,
+}
+
+// UpdateUserBindColumn updates only the provider binding column. Updating a
+// full user snapshot during OAuth binding can overwrite concurrent status or
+// role changes made after the snapshot was read.
+func UpdateUserBindColumn(userId int, column string, value string) error {
+	if userId <= 0 {
+		return errors.New("id 为空！")
+	}
+	if !userBindColumns[column] {
+		return fmt.Errorf("invalid user bind column: %s", column)
+	}
+	return DB.Model(&User{}).Where("id = ?", userId).Update(column, value).Error
+}
+
 // CheckUserExistOrDeleted check if user exist or deleted, if not exist, return false, nil, if deleted or exist, return true, nil
 func CheckUserExistOrDeleted(username string, email string) (bool, error) {
 	var user User
@@ -588,8 +606,20 @@ func (user *User) HardDelete() error {
 	if user.Id == 0 {
 		return errors.New("id 为空！")
 	}
-	err := DB.Unscoped().Delete(user).Error
-	return err
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		for _, authenticationData := range []any{
+			&TwoFABackupCode{}, &TwoFA{}, &PasskeyCredential{}, &Token{}, &UserOAuthBinding{},
+		} {
+			if err := tx.Unscoped().Where("user_id = ?", user.Id).Delete(authenticationData).Error; err != nil {
+				return err
+			}
+		}
+		return tx.Unscoped().Delete(user).Error
+	})
+	if err != nil {
+		return err
+	}
+	return invalidateUserCache(user.Id)
 }
 
 // ValidateAndFill check password & user status
