@@ -606,7 +606,13 @@ func (user *User) HardDelete() error {
 	if user.Id == 0 {
 		return errors.New("id 为空！")
 	}
+	var tokens []Token
 	err := DB.Transaction(func(tx *gorm.DB) error {
+		if common.RedisEnabled {
+			if err := tx.Select("id", commonKeyCol).Where("user_id = ?", user.Id).Find(&tokens).Error; err != nil {
+				return err
+			}
+		}
 		for _, authenticationData := range []any{
 			&TwoFABackupCode{}, &TwoFA{}, &PasskeyCredential{}, &Token{}, &UserOAuthBinding{},
 		} {
@@ -618,6 +624,13 @@ func (user *User) HardDelete() error {
 	})
 	if err != nil {
 		return err
+	}
+	if common.RedisEnabled {
+		for _, token := range tokens {
+			if err := cacheDeleteToken(token.Key); err != nil {
+				common.SysError(fmt.Sprintf("failed to invalidate token cache after hard deleting user %d: %v", user.Id, err))
+			}
+		}
 	}
 	return invalidateUserCache(user.Id)
 }
