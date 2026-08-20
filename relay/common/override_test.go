@@ -2184,6 +2184,59 @@ func TestApplyParamOverrideWithRelayInfoRecordsOnlyKeyOperationsWhenDebugDisable
 	}
 }
 
+func TestApplyParamOverrideWithRelayInfoSynchronizesReasoningEffort(t *testing.T) {
+	info := &RelayInfo{
+		ReasoningEffort: "high",
+		RelayFormat:     types.RelayFormatOpenAIResponses,
+		ChannelMeta: &ChannelMeta{
+			ParamOverride: map[string]interface{}{
+				"operations": []interface{}{
+					map[string]interface{}{
+						"mode":  "set",
+						"path":  "reasoning.effort",
+						"value": "max",
+					},
+				},
+			},
+		},
+	}
+
+	_, err := ApplyParamOverrideWithRelayInfo([]byte(`{"reasoning":{"effort":"high"}}`), info)
+	if err != nil {
+		t.Fatalf("ApplyParamOverrideWithRelayInfo returned error: %v", err)
+	}
+
+	if info.ReasoningEffort != "max" {
+		t.Fatalf("expected reasoning effort to follow the overridden request, got %q", info.ReasoningEffort)
+	}
+}
+
+func TestApplyParamOverrideWithRelayInfoClearsRemovedReasoningEffort(t *testing.T) {
+	info := &RelayInfo{
+		ReasoningEffort: "high",
+		RelayFormat:     types.RelayFormatOpenAIResponses,
+		ChannelMeta: &ChannelMeta{
+			ParamOverride: map[string]interface{}{
+				"operations": []interface{}{
+					map[string]interface{}{
+						"mode": "delete",
+						"path": "reasoning.effort",
+					},
+				},
+			},
+		},
+	}
+
+	_, err := ApplyParamOverrideWithRelayInfo([]byte(`{"reasoning":{"effort":"high"}}`), info)
+	if err != nil {
+		t.Fatalf("ApplyParamOverrideWithRelayInfo returned error: %v", err)
+	}
+
+	if info.ReasoningEffort != "" {
+		t.Fatalf("expected deleted reasoning effort to be cleared, got %q", info.ReasoningEffort)
+	}
+}
+
 func assertJSONEqual(t *testing.T, want, got string) {
 	t.Helper()
 

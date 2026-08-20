@@ -10,11 +10,15 @@ import (
 const EnableSearchModelSuffix = "-internet"
 
 func requestOpenAI2Ali(request dto.GeneralOpenAIRequest) *dto.GeneralOpenAIRequest {
+	if request.TopP == nil {
+		return &request
+	}
+
 	topP := lo.FromPtrOr(request.TopP, 0)
 	if topP >= 1 {
-		request.TopP = lo.ToPtr(0.999)
+		request.TopP = lo.ToPtr(0.99)
 	} else if topP <= 0 {
-		request.TopP = lo.ToPtr(0.001)
+		request.TopP = lo.ToPtr(0.01)
 	}
 	return &request
 }
