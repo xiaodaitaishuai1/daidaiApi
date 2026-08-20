@@ -65,6 +65,7 @@ type FetchModelsDialogProps = {
   onModelsSelected?: (models: string[]) => void
   redirectModels?: string[]
   redirectSourceModels?: string[]
+  existingModelsOverride?: string[]
 }
 
 export function FetchModelsDialog({
@@ -73,6 +74,7 @@ export function FetchModelsDialog({
   onModelsSelected,
   redirectModels = [],
   redirectSourceModels = [],
+  existingModelsOverride,
 }: FetchModelsDialogProps) {
   const { t } = useTranslation()
   const { currentRow } = useChannels()
@@ -85,8 +87,8 @@ export function FetchModelsDialog({
 
   // Parse existing models
   const existingModels = useMemo(
-    () => parseModelsString(currentRow?.models || ''),
-    [currentRow?.models]
+    () => existingModelsOverride ?? parseModelsString(currentRow?.models || ''),
+    [currentRow?.models, existingModelsOverride]
   )
 
   // Categorize models with redirect models

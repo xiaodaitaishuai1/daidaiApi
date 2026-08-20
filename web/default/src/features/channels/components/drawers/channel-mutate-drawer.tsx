@@ -3875,6 +3875,7 @@ export function ChannelMutateDrawer({
           }}
           redirectModels={redirectModelList}
           redirectSourceModels={redirectModelKeyList}
+          existingModelsOverride={currentModelsArray}
         />
       )}
 

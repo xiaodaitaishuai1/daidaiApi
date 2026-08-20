@@ -59,12 +59,14 @@ function ChatMenuItem({
   loading,
   onOpen,
   onNavigate,
+  preload,
 }: {
   preset: ChatPreset
   active: boolean
   loading: boolean
   onOpen: (preset: ChatPreset) => void | Promise<void>
   onNavigate: () => void
+  preload?: false
 }) {
   if (preset.type === 'web') {
     return (
@@ -75,6 +77,7 @@ function ChatMenuItem({
             <Link
               to='/chat/$chatId'
               params={{ chatId: preset.id }}
+              preload={preload}
               onClick={onNavigate}
             />
           }
@@ -271,6 +274,7 @@ export function ChatPresetsItem({ item }: { item: NavChatPresets }) {
               loading={loadingPresetId === preset.id}
               onOpen={handleOpenExternal}
               onNavigate={() => setOpenMobile(false)}
+              preload={isMobile ? false : undefined}
             />
           ))}
         </SidebarMenuSub>

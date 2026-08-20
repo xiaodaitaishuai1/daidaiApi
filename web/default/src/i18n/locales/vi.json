@@ -4582,6 +4582,14 @@
     "Zero retention": "Không lưu dữ liệu",
     "Zhipu": "Zhipu",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Access tokens are shown only once": "Mã truy cập chỉ được hiển thị một lần",
+    "For security, existing access tokens cannot be displayed. Regenerate only when you need a new token.": "Vì lý do bảo mật, không thể hiển thị lại mã truy cập hiện có. Chỉ tạo lại khi bạn cần mã mới.",
+    "Regenerate access token?": "Tạo lại mã truy cập?",
+    "Regenerate token": "Tạo lại mã",
+    "Regenerating immediately invalidates any existing token.": "Việc tạo lại sẽ vô hiệu hóa ngay mã hiện có.",
+    "Save this token now. You won't be able to view it again after closing this dialog.": "Hãy lưu mã này ngay. Bạn sẽ không thể xem lại sau khi đóng hộp thoại.",
+    "The new token will only be shown once. Copy it and store it securely.": "Mã mới chỉ hiển thị một lần. Hãy sao chép và lưu giữ an toàn.",
+    "This will immediately invalidate your existing access token. Any applications or scripts using it will stop working.": "Thao tác này sẽ vô hiệu hóa ngay mã truy cập hiện có. Các ứng dụng hoặc tập lệnh sử dụng mã sẽ ngừng hoạt động."
   }
 }
