@@ -7,11 +7,13 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	common2 "github.com/QuantumNous/new-api/common"
+	rootconstant "github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/relay/constant"
@@ -69,6 +71,40 @@ func PassThroughCodexClientIdentityHeaders(c *gin.Context, req *http.Header) {
 			req.Add(name, value)
 		}
 	}
+}
+
+// summarizeCodexIdentityHeaders creates a stable, non-sensitive trace of the
+// exact allowlisted identity headers that will be sent upstream.
+func summarizeCodexIdentityHeaders(headers http.Header) string {
+	items := make([]string, 0)
+	for name, values := range headers {
+		lowerName := strings.ToLower(strings.TrimSpace(name))
+		if _, ok := codexClientIdentityHeaders[lowerName]; !ok && !strings.HasPrefix(lowerName, "x-codex-") {
+			continue
+		}
+
+		value := strings.TrimSpace(strings.Join(values, ","))
+		if value == "" {
+			continue
+		}
+		hash := common2.Sha1([]byte(value))
+		items = append(items, fmt.Sprintf("%s=sha1:%s", lowerName, hash[:12]))
+	}
+	sort.Strings(items)
+	return strings.Join(items, ",")
+}
+
+func shouldTraceCodexIdentityHeaders(c *gin.Context, info *common.RelayInfo) bool {
+	if c == nil || info == nil {
+		return false
+	}
+	if info.ChannelType != rootconstant.ChannelTypeOpenAI && info.ChannelType != rootconstant.ChannelTypeCodex {
+		return false
+	}
+	if info.RelayMode != constant.RelayModeResponses && info.RelayMode != constant.RelayModeResponsesCompact {
+		return false
+	}
+	return common2.GetContextKeyBool(c, rootconstant.ContextKeyTokenCodexIdentityPassthrough)
 }
 
 const clientHeaderPlaceholderPrefix = "{client_header:"
@@ -343,6 +379,16 @@ func DoApiRequest(a Adaptor, c *gin.Context, info *common.RelayInfo, requestBody
 		return nil, err
 	}
 	applyHeaderOverrideToRequest(req, headerOverride)
+	if shouldTraceCodexIdentityHeaders(c, info) {
+		trace := summarizeCodexIdentityHeaders(req.Header)
+		common2.SetContextKey(c, rootconstant.ContextKeyCodexIdentityTrace, trace)
+		logger.LogInfo(c.Request.Context(), fmt.Sprintf(
+			"codex identity trace: channel #%d multi_key_index=%d headers=[%s]",
+			info.ChannelId,
+			info.ChannelMultiKeyIndex,
+			trace,
+		))
+	}
 	resp, err := doRequest(c, req, info)
 	if err != nil {
 		return nil, fmt.Errorf("do request failed: %w", err)

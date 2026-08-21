@@ -10,6 +10,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSummarizeCodexIdentityHeadersHashesOnlyAllowedHeaders(t *testing.T) {
+	headers := http.Header{
+		"User-Agent":              {"codex_cli_rs/0.141.0"},
+		"Originator":              {"codex_cli_rs"},
+		"Session_id":              {"session-123"},
+		"X-Codex-Installation-Id": {"installation-123"},
+		"Authorization":           {"Bearer secret"},
+		"Cookie":                  {"session=secret"},
+	}
+
+	summary := summarizeCodexIdentityHeaders(headers)
+
+	require.Contains(t, summary, "user-agent=sha1:")
+	require.Contains(t, summary, "originator=sha1:")
+	require.Contains(t, summary, "session_id=sha1:")
+	require.Contains(t, summary, "x-codex-installation-id=sha1:")
+	require.NotContains(t, summary, "codex_cli_rs")
+	require.NotContains(t, summary, "session-123")
+	require.NotContains(t, summary, "Authorization")
+	require.NotContains(t, summary, "secret")
+}
+
 func TestProcessHeaderOverride_ChannelTestSkipsPassthroughRules(t *testing.T) {
 	t.Parallel()
 

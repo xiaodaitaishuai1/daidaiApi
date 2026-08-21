@@ -20,6 +20,9 @@ const (
 	ContextKeyTokenModelLimit               ContextKey = "token_model_limit"
 	ContextKeyTokenCrossGroupRetry          ContextKey = "token_cross_group_retry"
 	ContextKeyTokenCodexIdentityPassthrough ContextKey = "token_codex_identity_passthrough"
+	// ContextKeyCodexIdentityTrace holds a non-sensitive hash-only summary of
+	// Codex identity headers forwarded to an upstream provider.
+	ContextKeyCodexIdentityTrace ContextKey = "codex_identity_trace"
 
 	/* channel related keys */
 	ContextKeyChannelId                ContextKey = "channel_id"
