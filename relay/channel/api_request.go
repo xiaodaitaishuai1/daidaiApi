@@ -39,6 +39,38 @@ func SetupApiRequestHeader(info *common.RelayInfo, c *gin.Context, req *http.Hea
 	}
 }
 
+var codexClientIdentityHeaders = map[string]struct{}{
+	"user-agent": {},
+	"originator": {},
+	"session_id": {},
+}
+
+// PassThroughCodexClientIdentityHeaders copies only the identity headers used
+// by Codex-compatible upstreams. Credentials and hop-by-hop headers are left
+// to the channel adapter and HTTP client to set.
+func PassThroughCodexClientIdentityHeaders(c *gin.Context, req *http.Header) {
+	if c == nil || c.Request == nil || req == nil {
+		return
+	}
+
+	for name, values := range c.Request.Header {
+		lowerName := strings.ToLower(strings.TrimSpace(name))
+		if _, ok := codexClientIdentityHeaders[lowerName]; !ok && !strings.HasPrefix(lowerName, "x-codex-") {
+			continue
+		}
+
+		// Replace any adapter-generated value while preserving all non-empty
+		// values supplied by the original Codex client.
+		req.Del(name)
+		for _, value := range values {
+			if strings.TrimSpace(value) == "" {
+				continue
+			}
+			req.Add(name, value)
+		}
+	}
+}
+
 const clientHeaderPlaceholderPrefix = "{client_header:"
 
 const (

@@ -7,7 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/dto"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/service"
@@ -85,6 +87,26 @@ func TestSetupRequestHeaderDoesNotSynthesizeMissingUserAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, headers.Get("User-Agent"))
 	require.Equal(t, "codex_cli_rs", headers.Get("Originator"))
+}
+
+func TestConvertOpenAIResponsesRequestPreservesClientMetadata(t *testing.T) {
+	var request dto.OpenAIResponsesRequest
+	err := common.Unmarshal([]byte(`{"model":"gpt-5-codex","input":"hi","client_metadata":{"x-codex-window-id":"window-123"}}`), &request)
+	require.NoError(t, err)
+
+	converted, err := (&Adaptor{}).ConvertOpenAIResponsesRequest(nil, &relaycommon.RelayInfo{
+		RelayMode:   relayconstant.RelayModeResponses,
+		ChannelMeta: &relaycommon.ChannelMeta{},
+	}, request)
+	require.NoError(t, err)
+
+	body, err := common.Marshal(converted)
+	require.NoError(t, err)
+	var payload map[string]interface{}
+	require.NoError(t, common.Unmarshal(body, &payload))
+	metadata, ok := payload["client_metadata"].(map[string]interface{})
+	require.True(t, ok)
+	require.Equal(t, "window-123", metadata["x-codex-window-id"])
 }
 
 func TestDoApiRequestUsesHeaderOverrideAndPreservesResponsesPaths(t *testing.T) {

@@ -175,6 +175,9 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 
 func (a *Adaptor) SetupRequestHeader(c *gin.Context, header *http.Header, info *relaycommon.RelayInfo) error {
 	channel.SetupApiRequestHeader(info, c, header)
+	if info.RelayMode == relayconstant.RelayModeResponses || info.RelayMode == relayconstant.RelayModeResponsesCompact {
+		channel.PassThroughCodexClientIdentityHeaders(c, header)
+	}
 	if info.ChannelType == constant.ChannelTypeAzure || info.ChannelType == constant.ChannelTypeXiaomi {
 		header.Set("api-key", info.ApiKey)
 		return nil

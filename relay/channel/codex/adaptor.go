@@ -21,35 +21,6 @@ import (
 type Adaptor struct {
 }
 
-var codexClientIdentityHeaders = map[string]struct{}{
-	"user-agent": {},
-	"originator": {},
-	"session_id": {},
-}
-
-func copyCodexClientIdentityHeaders(c *gin.Context, req *http.Header) {
-	if c == nil || c.Request == nil || req == nil {
-		return
-	}
-
-	for name, values := range c.Request.Header {
-		lowerName := strings.ToLower(strings.TrimSpace(name))
-		if _, ok := codexClientIdentityHeaders[lowerName]; !ok && !strings.HasPrefix(lowerName, "x-codex-") {
-			continue
-		}
-
-		// Replace any adapter-generated value while preserving all non-empty
-		// values supplied by the original Codex client.
-		req.Del(name)
-		for _, value := range values {
-			if strings.TrimSpace(value) == "" {
-				continue
-			}
-			req.Add(name, value)
-		}
-	}
-}
-
 func (a *Adaptor) ConvertGeminiRequest(c *gin.Context, info *relaycommon.RelayInfo, request *dto.GeminiChatRequest) (any, error) {
 	return nil, errors.New("codex channel: endpoint not supported")
 }
@@ -176,7 +147,7 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 
 func (a *Adaptor) SetupRequestHeader(c *gin.Context, req *http.Header, info *relaycommon.RelayInfo) error {
 	channel.SetupApiRequestHeader(info, c, req)
-	copyCodexClientIdentityHeaders(c, req)
+	channel.PassThroughCodexClientIdentityHeaders(c, req)
 
 	key := strings.TrimSpace(info.ApiKey)
 	if !strings.HasPrefix(key, "{") {
