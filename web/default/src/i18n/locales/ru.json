@@ -787,6 +787,8 @@
     "Codex Authorization": "Авторизация Codex",
     "Codex channels use an OAuth JSON credential as the key.": "Каналы Codex используют учётные данные OAuth в формате JSON в качестве ключа.",
     "Codex CLI Header Passthrough": "Проброс заголовков Codex CLI",
+    "Codex identity passthrough": "Передача идентификатора Codex",
+    "Forward Codex client identity headers for Responses requests routed through Codex or OpenAI channels.": "Передавать заголовки идентификации клиента Codex для запросов Responses, направляемых через каналы Codex или OpenAI.",
     "Cohere": "Cohere",
     "Collapse": "Свернуть",
     "Collapse All": "Свернуть все",

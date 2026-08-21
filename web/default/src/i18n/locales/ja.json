@@ -787,6 +787,8 @@
     "Codex Authorization": "Codex認証",
     "Codex channels use an OAuth JSON credential as the key.": "CodexチャンネルはOAuth JSON認証情報をキーとして使用します。",
     "Codex CLI Header Passthrough": "Codex CLI ヘッダーパススルー",
+    "Codex identity passthrough": "Codex ID の透過",
+    "Forward Codex client identity headers for Responses requests routed through Codex or OpenAI channels.": "Codex または OpenAI チャネル経由の Responses リクエストで、Codex クライアント ID ヘッダーを転送します。",
     "Cohere": "Cohere",
     "Collapse": "折りたたむ",
     "Collapse All": "すべて折りたたむ",

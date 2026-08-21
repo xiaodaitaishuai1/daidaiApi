@@ -644,6 +644,31 @@ export function ApiKeysMutateDrawer({
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name='codex_identity_passthrough'
+                      render={({ field }) => (
+                        <FormItem className='flex min-h-16 flex-row items-center justify-between gap-3 rounded-lg border px-3 py-2.5 sm:min-h-20 sm:gap-4 sm:px-4 sm:py-3'>
+                          <div className='space-y-0.5'>
+                            <FormLabel className='text-sm'>
+                              {t('Codex identity passthrough')}
+                            </FormLabel>
+                            <FormDescription className='text-xs'>
+                              {t(
+                                'Forward Codex client identity headers for Responses requests routed through Codex or OpenAI channels.'
+                              )}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </CollapsibleContent>
               </section>

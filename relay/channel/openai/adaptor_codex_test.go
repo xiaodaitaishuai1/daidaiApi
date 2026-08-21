@@ -21,7 +21,9 @@ func TestOpenAIResponsesSetupRequestHeaderForwardsCodexIdentity(t *testing.T) {
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
 	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.141.0 (linux; x86_64)")
 	c.Request.Header.Set("Originator", "codex_cli_rs")
+	c.Request.Header.Set("session_id", "session-123")
 	c.Request.Header.Set("X-Codex-Installation-Id", "install-123")
+	c.Set("token_codex_identity_passthrough", true)
 
 	headers := http.Header{}
 	err := (&Adaptor{}).SetupRequestHeader(c, &headers, &relaycommon.RelayInfo{
@@ -39,12 +41,39 @@ func TestOpenAIResponsesSetupRequestHeaderForwardsCodexIdentity(t *testing.T) {
 	require.Equal(t, "Bearer sub2-api-key", headers.Get("Authorization"))
 }
 
+func TestOpenAIResponsesSetupRequestHeaderDoesNotForwardCodexIdentityWhenTokenDisabled(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
+	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.141.0 (linux; x86_64)")
+	c.Request.Header.Set("Originator", "external-client")
+	c.Request.Header.Set("session_id", "session-123")
+	c.Request.Header.Set("X-Codex-Installation-Id", "install-123")
+
+	headers := http.Header{}
+	err := (&Adaptor{}).SetupRequestHeader(c, &headers, &relaycommon.RelayInfo{
+		RelayMode: relayconstant.RelayModeResponses,
+		ChannelMeta: &relaycommon.ChannelMeta{
+			ChannelType: constant.ChannelTypeOpenAI,
+			ApiKey:      "sub2-api-key",
+		},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, headers.Get("User-Agent"))
+	require.Empty(t, headers.Get("Originator"))
+	require.Empty(t, headers.Get("session_id"))
+	require.Empty(t, headers.Get("X-Codex-Installation-Id"))
+	require.Equal(t, "Bearer sub2-api-key", headers.Get("Authorization"))
+}
+
 func TestOpenAIChatSetupRequestHeaderDoesNotForwardCodexIdentity(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/chat/completions", nil)
 	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.141.0 (linux; x86_64)")
 	c.Request.Header.Set("X-Codex-Installation-Id", "install-123")
+	c.Set("token_codex_identity_passthrough", true)
 
 	headers := http.Header{}
 	err := (&Adaptor{}).SetupRequestHeader(c, &headers, &relaycommon.RelayInfo{
@@ -78,6 +107,7 @@ func TestOpenAIResponsesDoRequestForwardsCodexHeadersAndBody(t *testing.T) {
 	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.141.0 (linux; x86_64)")
 	c.Request.Header.Set("Originator", "codex_cli_rs")
 	c.Request.Header.Set("X-Codex-Installation-Id", "install-123")
+	c.Set("token_codex_identity_passthrough", true)
 
 	body := `{"model":"gpt-5.6-terra","client_metadata":{"x-codex-window-id":"window-123"}}`
 	info := &relaycommon.RelayInfo{

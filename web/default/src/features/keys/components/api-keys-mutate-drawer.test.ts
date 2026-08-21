@@ -22,6 +22,7 @@ import {
   apiKeyFormSchema,
   generateApiKeyName,
   generateRandomSuffix,
+  transformFormDataToPayload,
   type ApiKeyFormValues,
 } from '../lib'
 import { submitApiKeyForm } from '../lib/api-key-submit'
@@ -34,6 +35,7 @@ function createFormValues(): ApiKeyFormValues {
     unlimited_quota: true,
     model_limits: [],
     allow_ips: '',
+    codex_identity_passthrough: false,
     group: 'default',
     cross_group_retry: false,
     tokenCount: 1,
@@ -102,6 +104,24 @@ describe('submitApiKeyForm', () => {
 })
 
 describe('apiKeyFormSchema', () => {
+  test('defaults Codex identity passthrough to disabled', () => {
+    const result = apiKeyFormSchema.safeParse(createFormValues())
+
+    assert.equal(result.success, true)
+    if (result.success) {
+      assert.equal(result.data.codex_identity_passthrough, false)
+    }
+  })
+
+  test('includes enabled Codex identity passthrough in the API payload', () => {
+    const payload = transformFormDataToPayload({
+      ...createFormValues(),
+      codex_identity_passthrough: true,
+    })
+
+    assert.equal(payload.codex_identity_passthrough, true)
+  })
+
   test('does not block rename-only saves when optional quota is NaN', () => {
     const result = apiKeyFormSchema.safeParse({
       ...createFormValues(),

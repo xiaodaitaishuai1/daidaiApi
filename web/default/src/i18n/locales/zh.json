@@ -787,6 +787,8 @@
     "Codex Authorization": "Codex 授权",
     "Codex channels use an OAuth JSON credential as the key.": "Codex 频道使用 OAuth JSON 凭据作为密钥。",
     "Codex CLI Header Passthrough": "Codex CLI 请求头透传",
+    "Codex identity passthrough": "Codex 身份透传",
+    "Forward Codex client identity headers for Responses requests routed through Codex or OpenAI channels.": "为经 Codex 或 OpenAI 渠道路由的 Responses 请求转发 Codex 客户端身份请求头。",
     "Cohere": "Cohere",
     "Collapse": "收起",
     "Collapse All": "全部收起",

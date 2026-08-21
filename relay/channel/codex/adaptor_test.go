@@ -55,6 +55,7 @@ func TestSetupRequestHeaderForwardsCodexIdentityHeaders(t *testing.T) {
 		"Cookie":                  "session=secret",
 		"Accept-Encoding":         "gzip",
 	})
+	c.Set("token_codex_identity_passthrough", true)
 	c.Request.Header["x-codex-raw-fingerprint"] = []string{"raw-fingerprint"}
 	info := newCodexHeaderTestInfo("https://sub2.example.com", relayconstant.RelayModeResponses)
 	headers := http.Header{}
@@ -75,6 +76,45 @@ func TestSetupRequestHeaderForwardsCodexIdentityHeaders(t *testing.T) {
 	require.Empty(t, headers.Get("Cookie"))
 	require.Empty(t, headers.Get("Accept-Encoding"))
 	require.Empty(t, headers.Get("Host"))
+}
+
+func TestSetupRequestHeaderDoesNotForwardCodexIdentityHeadersWhenTokenDisabled(t *testing.T) {
+	c := newCodexHeaderTestContext(map[string]string{
+		"User-Agent":              "codex_cli_rs/0.141.0 (linux; x86_64)",
+		"Originator":              "external-client",
+		"session_id":              "session-123",
+		"X-Codex-Installation-Id": "install-123",
+	})
+	info := newCodexHeaderTestInfo("https://sub2.example.com", relayconstant.RelayModeResponses)
+	headers := http.Header{}
+
+	err := (&Adaptor{}).SetupRequestHeader(c, &headers, info)
+
+	require.NoError(t, err)
+	require.Empty(t, headers.Get("User-Agent"))
+	require.Equal(t, "codex_cli_rs", headers.Get("Originator"))
+	require.Empty(t, headers.Get("session_id"))
+	require.Empty(t, headers.Get("X-Codex-Installation-Id"))
+}
+
+func TestSetupRequestHeaderDoesNotForwardCodexIdentityForChatCompletions(t *testing.T) {
+	c := newCodexHeaderTestContext(map[string]string{
+		"User-Agent":              "codex_cli_rs/0.141.0 (linux; x86_64)",
+		"Originator":              "external-client",
+		"session_id":              "session-123",
+		"X-Codex-Installation-Id": "install-123",
+	})
+	c.Set("token_codex_identity_passthrough", true)
+	info := newCodexHeaderTestInfo("https://sub2.example.com", relayconstant.RelayModeChatCompletions)
+	headers := http.Header{}
+
+	err := (&Adaptor{}).SetupRequestHeader(c, &headers, info)
+
+	require.NoError(t, err)
+	require.Empty(t, headers.Get("User-Agent"))
+	require.Equal(t, "codex_cli_rs", headers.Get("Originator"))
+	require.Empty(t, headers.Get("session_id"))
+	require.Empty(t, headers.Get("X-Codex-Installation-Id"))
 }
 
 func TestSetupRequestHeaderDoesNotSynthesizeMissingUserAgent(t *testing.T) {
@@ -138,6 +178,7 @@ func TestDoApiRequestUsesHeaderOverrideAndPreservesResponsesPaths(t *testing.T) 
 				"Originator":              "codex_cli_rs",
 				"X-Codex-Installation-Id": "install-123",
 			})
+			c.Set("token_codex_identity_passthrough", true)
 			info := newCodexHeaderTestInfo(server.URL, tt.mode)
 			body := `{"model":"gpt-5-codex","client_metadata":{"x-codex-window-id":"window-123"}}`
 			resp, err := (&Adaptor{}).DoRequest(c, info, strings.NewReader(body))

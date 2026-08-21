@@ -787,6 +787,8 @@
     "Codex Authorization": "Ủy quyền Codex",
     "Codex channels use an OAuth JSON credential as the key.": "Kênh Codex dùng thông tin xác thực OAuth JSON làm khóa.",
     "Codex CLI Header Passthrough": "Chuyển tiếp header Codex CLI",
+    "Codex identity passthrough": "Chuyển tiếp danh tính Codex",
+    "Forward Codex client identity headers for Responses requests routed through Codex or OpenAI channels.": "Chuyển tiếp header nhận dạng ứng dụng khách Codex cho các yêu cầu Responses được định tuyến qua kênh Codex hoặc OpenAI.",
     "Cohere": "Cohere",
     "Collapse": "Thu gọn",
     "Collapse All": "Thu gọn tất cả",
