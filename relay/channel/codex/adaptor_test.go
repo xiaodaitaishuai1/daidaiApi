@@ -78,7 +78,7 @@ func TestSetupRequestHeaderForwardsCodexIdentityHeaders(t *testing.T) {
 	require.Empty(t, headers.Get("Host"))
 }
 
-func TestSetupRequestHeaderDoesNotForwardCodexIdentityHeadersWhenTokenDisabled(t *testing.T) {
+func TestSetupRequestHeaderForwardsCodexIdentityHeadersByDefault(t *testing.T) {
 	c := newCodexHeaderTestContext(map[string]string{
 		"User-Agent":              "codex_cli_rs/0.141.0 (linux; x86_64)",
 		"Originator":              "external-client",
@@ -91,10 +91,10 @@ func TestSetupRequestHeaderDoesNotForwardCodexIdentityHeadersWhenTokenDisabled(t
 	err := (&Adaptor{}).SetupRequestHeader(c, &headers, info)
 
 	require.NoError(t, err)
-	require.Empty(t, headers.Get("User-Agent"))
-	require.Equal(t, "codex_cli_rs", headers.Get("Originator"))
-	require.Empty(t, headers.Get("session_id"))
-	require.Empty(t, headers.Get("X-Codex-Installation-Id"))
+	require.Equal(t, "codex_cli_rs/0.141.0 (linux; x86_64)", headers.Get("User-Agent"))
+	require.Equal(t, "external-client", headers.Get("Originator"))
+	require.Equal(t, "session-123", headers.Get("session_id"))
+	require.Equal(t, "install-123", headers.Get("X-Codex-Installation-Id"))
 }
 
 func TestSetupRequestHeaderDoesNotForwardCodexIdentityForChatCompletions(t *testing.T) {
@@ -127,6 +127,34 @@ func TestSetupRequestHeaderDoesNotSynthesizeMissingUserAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, headers.Get("User-Agent"))
 	require.Equal(t, "codex_cli_rs", headers.Get("Originator"))
+}
+
+func TestSetupRequestHeaderForwardsSafeCodexHeaders(t *testing.T) {
+	c := newCodexHeaderTestContext(map[string]string{
+		"X-Trace-Id":      "trace-123",
+		"Traceparent":     "00-trace-span-01",
+		"Authorization":   "Bearer downstream-token",
+		"X-Api-Key":       "downstream-key",
+		"Cookie":          "session=secret",
+		"Connection":      "keep-alive",
+		"Accept-Encoding": "gzip",
+		"Content-Length":  "999",
+	})
+	info := newCodexHeaderTestInfo("https://sub2.example.com", relayconstant.RelayModeResponses)
+	headers := http.Header{}
+
+	err := (&Adaptor{}).SetupRequestHeader(c, &headers, info)
+
+	require.NoError(t, err)
+	require.Equal(t, "trace-123", headers.Get("X-Trace-Id"))
+	require.Equal(t, "00-trace-span-01", headers.Get("Traceparent"))
+	require.Equal(t, "Bearer upstream-token", headers.Get("Authorization"))
+	require.Equal(t, "acct-123", headers.Get("chatgpt-account-id"))
+	require.Empty(t, headers.Get("X-Api-Key"))
+	require.Empty(t, headers.Get("Cookie"))
+	require.Empty(t, headers.Get("Connection"))
+	require.Empty(t, headers.Get("Accept-Encoding"))
+	require.Empty(t, headers.Get("Content-Length"))
 }
 
 func TestConvertOpenAIResponsesRequestPreservesClientMetadata(t *testing.T) {

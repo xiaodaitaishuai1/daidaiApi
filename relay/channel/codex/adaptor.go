@@ -149,6 +149,10 @@ func (a *Adaptor) GetRequestURL(info *relaycommon.RelayInfo) (string, error) {
 func (a *Adaptor) SetupRequestHeader(c *gin.Context, req *http.Header, info *relaycommon.RelayInfo) error {
 	channel.SetupApiRequestHeader(info, c, req)
 	if info.ChannelType == constant.ChannelTypeCodex &&
+		(info.RelayMode == relayconstant.RelayModeResponses || info.RelayMode == relayconstant.RelayModeResponsesCompact) {
+		channel.PassThroughCodexSafeHeaders(c, req)
+	}
+	if info.ChannelType == constant.ChannelTypeCodex &&
 		(info.RelayMode == relayconstant.RelayModeResponses || info.RelayMode == relayconstant.RelayModeResponsesCompact) &&
 		common.GetContextKeyBool(c, constant.ContextKeyTokenCodexIdentityPassthrough) {
 		channel.PassThroughCodexClientIdentityHeaders(c, req)
